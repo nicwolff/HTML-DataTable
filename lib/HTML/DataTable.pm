@@ -14,31 +14,31 @@ HTML::DataTable - Print HTML tables from Perl data
 
 =head1 VERSION
 
-Version 0.51
+Version 0.52
 
 =cut
 
-our $VERSION = 0.51;
+our $VERSION = 0.52;
 
 =head1 SYNOPSIS
 
-	use HTML::DataTable
-	my $list = HTML::DataTable->new(
-		data => $cgi_data,
-		columns => [
-			# hashrefs describing column formats
-		],
-		rows => [
-			# arrayrefs listing data to show in table
-		],
-	);
-	print $list;
+  use HTML::DataTable
+  my $list = HTML::DataTable->new(
+    data => $cgi_data,
+    columns => [
+      # hashrefs describing column formats
+    ],
+    rows => [
+      # arrayrefs listing data to show in table
+    ],
+  );
+  print $list;
 
 =head1 METHODS
 
 =head2 new()
 
-Creates a new List object.
+Creates a new HTML::DataTable object.
 
 =head3 ATTRIBUTES
 
@@ -139,10 +139,6 @@ If this is defined, then the column will be left blank if the value printed woul
 =head4 nobr
 
 If this is defined, then the column's content will be surrounded by <nobr> tags so it isn't formatted into multiple lines.
-
-=head4 sep
-
-A character string that will be used to concatenate the results of the query given in the "sql" attribute. Defaults to ", ".
 
 =cut
 
