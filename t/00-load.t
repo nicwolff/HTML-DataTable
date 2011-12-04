@@ -3,7 +3,7 @@
 use Test::More tests => 2;
 
 BEGIN {
-    use_ok( 'HTML::DataTable::CGI', 'loading HTML::DataTable::CGI' ) || print "Bail out!\n";
+    use_ok( 'HTML::DataTable', 'loading HTML::DataTable' ) || print "Bail out!\n";
 }
 
 BEGIN {

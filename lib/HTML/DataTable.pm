@@ -82,11 +82,11 @@ Should be assigned a hashref representing the CGI parameters.
 
 One of:
 
-An arrayref listing one arrayref holding the values to appear in each row of the list.
+* An arrayref listing one arrayref holding the values to appear in each row of the list.
 
-An arrayref listing one hashref holding the values to appear in each row of the list.
+* An arrayref listing one hashref holding the values to appear in each row of the list.
 
-A hashref mapping each row's ID to a hashref holding the values to appear in that row of the list, in which case the "sort" attribute should name the hash key by which to sort the hashref entries.
+* A hashref mapping each row's ID to a hashref holding the values to appear in that row of the list, in which case the "sort" attribute should name the hash key by which to sort the hashref entries.
 
 =head3 columns
 
@@ -100,9 +100,13 @@ The text to print at the top of this column.
 
 This can be either
 
-* a scalar, which will be used as an index in the current row's data array
+* A scalar, which will be used as an index in the current row's data array
 
-* a reference to a subroutine, which will be passed the current row's data array
+* An arrayref, which will list an index in the current row's data array and singular and plural nouns to append to the value found there
+
+* A reference to a subroutine, which will be passed the current row's data array
+
+* A hashref, which will map a predefined format name to an index in the current row's data array
 
 =head4 none
 
@@ -181,14 +185,12 @@ sub list_HTML {
 
 	# SET ORDER BY IF SORTING ##############
 
-	delete $me->{data}->{sort} if $me->{data}->{sort} eq $me->{sort}->[0];
-	unshift @{$me->{sort}}, $me->{data}->{sort} if $me->{data}->{sort};
+	delete $me->{data}->{sort} if defined $me->{data}->{sort} and $me->{data}->{sort} eq $me->{sort}->[0];
+	unshift @{$me->{sort}}, $me->{data}->{sort} if defined $me->{data}->{sort};
 
-	delete $me->{data}->{sort_dir} if $me->{data}->{sort_dir} eq 'asc';
-	$me->{sort_dir} = $me->{data}->{sort_dir} if $me->{data}->{sort_dir};
-	if ( $me->{sort} ) {
-		$me->set_sort_order;
-	}
+	delete $me->{data}->{sort_dir} if defined $me->{data}->{sort_dir} and $me->{data}->{sort_dir} eq 'asc';
+	$me->{sort_dir} = $me->{data}->{sort_dir} if defined $me->{data}->{sort_dir};
+	if ( $me->{sort} ) { $me->set_sort_order }
 
 	# PRINT LIST #############
 
@@ -212,7 +214,9 @@ sub list_HTML {
 		if $alphabet or $search;
 
 	# Table header
-	$html .= $me->header unless $me->{header} eq 'no' or ( $me->{sections} and $me->{header} ne 'yes' );
+	$html .= $me->header unless
+		defined $me->{header} and $me->{header} eq 'no'
+		or ( $me->{sections} and $me->{header} ne 'yes' );
 
 	# Print rows ###################
 
@@ -351,10 +355,14 @@ sub table_row {
 	}
 
 	# Change row bgcolor
-	$me->switch_bgs unless $me->{shade_alternate_rows} eq 'no';
+	$me->switch_bgs unless defined $me->{shade_alternate_rows} and $me->{shade_alternate_rows} eq 'no';
 
 	$html .= HTML [ tr =>
-		{ valign => 'top', bgcolor => $me->{_bgcolor}, id => defined $me->{row_id_col} && join '-', 'row', $d->[$me->{row_id_col} ] },
+		{
+			valign => 'top',
+			bgcolor => $me->{_bgcolor},
+			id => defined $me->{row_id_col} && join '-', 'row', $d->[$me->{row_id_col} ]
+		},
 		[[ $cells ]]
 	];
 
@@ -365,7 +373,8 @@ sub table_row {
 sub switch_bgs {
 	my $me = shift;
 
-	$me->{_bgcolor} = ( $me->{_bgcolor} eq $me->{light_bg} ) ? $me->{dark_bg} : $me->{light_bg};
+	$me->{_bgcolor} = ( defined $me->{_bgcolor} and $me->{_bgcolor} eq $me->{light_bg} ) ?
+		$me->{dark_bg} : $me->{light_bg};
 }
 
 sub table_cell {
@@ -436,7 +445,7 @@ sub format {
 	if (
 		! ( ref $test eq 'CODE' and ! $test->(@data) )
 		and $formatted = $col->{formatter}->(
-			map { $col->{contains_html} ? $_ : xhtml($_) } @data
+			map { $col->{contains_html} ? $_ : HTML $_ } @data
 		)
 	) {
 

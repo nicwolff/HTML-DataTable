@@ -21,43 +21,60 @@ our $VERSION = 0.5;
 
 =head1 SYNOPSIS
 
-	use HTML::DataTable::DBI;
-	my $list = HTML::DataTable::DBI->new(
-		data => $cgi_data,
-		columns => [
-			# hashrefs describing column formats
-		],
-		sql => 'SELECT * FROM table_name'
-	);
-	print $list;
+  use HTML::DataTable::DBI;
+  my $list = HTML::DataTable::DBI->new(
+    data => $cgi_data,
+    columns => [
+      # hashrefs describing column formats
+    ],
+    sql => 'SELECT * FROM table_name WHERE foreign_key = ?',
+    sql_params => [ $some_value ],
+    delete =>
+  );
+  print $list;
 
 =head1 METHODS
 
 Look in HTML::DataTable for column-definition and table formatting attributes
 
-=head3 ADDITIONAL ATTRIBUTES
+=head2 ADDITIONAL ATTRIBUTES
 
-=head4 dsn
+=head3 dsn
 
 A list containing a DBI connect string, username, and password.
 
-=head4 dbh
+=head3 dbh
 
 You can supply a live DBI database handle instead of a DSN.
 
-=head4 sql
+=head3 sql
 
-A SQL query with DBI "?" placeholders. That query will be run and its results formatted and shown in the table.
+A SQL query with optional "?" placeholders, which will be run and its results formatted and shown in the table.
 
-=head4 sql_params
+=head3 sql_params
 
-An arrayref containing the actual parameters for the SQL query.
+An optional arrayref containing the actual parameters for the SQL query.
 
-=head4 delete
+=head3 delete
 
-A hashref telling the list what record to delete. If you include a
+An optional hashref telling the list what record to delete. If this is included, a column will be added to the table to show trash icons. The hashref can take either of two forms. If the SQL query for this table is not parameterized – that is, the record's ID is all we need to know which record to delete, then the hashref can simply map the column index of the record ID to the CGI argument that supplies the one to delete:
 
-=head4 trash_icon
+  delete => {
+    sql => 'DELETE FROM table WHERE record_id = ?',
+    id => [ 0 => $args{delete} ],
+  }
+
+whereas if the query had a parameter the delete hashref has to give both the local and foreign keys:
+
+  delete => {
+    sql => 'DELETE FROM table WHERE record_id = ? AND foreign_id = ?',
+    local => [ record_id => $args{speaker_id} ],
+    foreign => [ 0 => $args{delete} ],
+  }
+
+An optional "noun" attribute in that hashref can supply a word to replace "record" in the delete confirmation alert.
+
+=head3 trash_icon
 
 The URL of a trash can icon for use in the "Delete" column – defaults to /art/trash.gif.
 
@@ -121,12 +138,12 @@ sub next_row {
 		( $me->{_sth} = $me->{_dbh}->prepare( $me->{sql} ) )->execute( @{$me->{sql_params}} );
 	}
 
-	my @row = $me->{_sth}->fetchrow or
-		do {
-			$me->{_sth}->finish;
-			$me->{_dbh}->disconnect unless $me->{dbh};
-			return undef;
-		};
+	my @row = $me->{_sth}->fetchrow or do {
+		$me->{_sth}->finish;
+		undef $me->{_sth};
+		$me->{_dbh}->disconnect unless $me->{dbh};
+		return;
+	};
 
 	return \@row;
 }
@@ -147,3 +164,14 @@ sub format {
 }
 
 1;
+
+=head1 SEE ALSO
+
+HTML::DataTable
+
+=head1 AUTHORS
+
+Nic Wolff <nic@angel.net>
+Jason Barden <jason@angel.net>
+
+=cut
