@@ -14,11 +14,11 @@ HTML::DataTable - Print HTML tables from Perl data
 
 =head1 VERSION
 
-Version 0.5
+Version 0.51
 
 =cut
 
-our $VERSION = 0.5;
+our $VERSION = 0.51;
 
 =head1 SYNOPSIS
 
@@ -95,6 +95,10 @@ An arrayref listing one hashref defining each column of the table. These hashref
 =head4 header
 
 The text to print at the top of this column.
+
+=head4 category
+
+A second-level header to be printed above the column header; adjacent column's category headers will be merged if they are the same.
 
 =head4 format
 
